@@ -1,0 +1,181 @@
+---
+title: "project"
+logo: assets/city-of-norfolk.png
+format: dashboard
+
+theme: 
+  - cosmo
+  - assets/styles/custom.scss
+  - assets/styles/quarto.scss
+  
+resources:
+  - assets/city-of-norfolk.png
+
+execute: 
+  echo: false
+---
+
+## Comparing average amount of calories
+
+```{r}
+library(tidyverse)   # For data manipulation and visualization
+library(ggrepel)     # ggplot extension for improved text labels
+library(ggthemes)    # ggplot extension for additional themes
+library(dplyr) 
+
+df_selected <- data |> 
+  select(Age, Gender,
+         `Weight (kg)`, 
+         `Height (m)`, 
+         Calories_Burned, 
+         Workout_Type, 
+         BMI, 
+         Fat_Percentage)
+
+
+df_mutated <- df_selected |> 
+  mutate(BMI_Category = case_when(
+    BMI < 18.5 ~ "Underweight",
+    BMI < 25 ~ "Normal",
+    BMI < 30 ~ "Overweight",
+    TRUE ~ "Obese"
+  ))
+
+
+df_filtered <- df_mutated |>
+  filter(Age >= 18)
+
+ 
+distinct_workouts <- df_filtered |> 
+  select(Workout_Type) |> 
+  distinct()
+
+ 
+summary_df <- df_filtered |>
+  group_by(Gender, Workout_Type) |> 
+  summarize(
+    mean_calories = mean(Calories_Burned, na.rm = TRUE),
+    mean_BMI = mean(BMI, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+ 
+pivoted_df <- summary_df |> 
+  select(Gender, Workout_Type, mean_calories) |> 
+  pivot_wider(names_from = Gender, values_from = mean_calories)
+
+
+diff_df <- pivoted_df |> 
+  mutate(difference = Male - Female)
+
+summary_df |>
+  ggplot(aes(x = Workout_Type, y = mean_calories, color = Workout_Type)) +
+  geom_point(size = 4) +
+  facet_wrap(~ Gender, ncol = 2) +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.title = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  labs(
+    title = "Average Calories Burned by Workout Type and Gender",
+    x = "Workout Type",
+    y = "Average Calories Burned"
+  )
+
+
+```
+
+> **The difference between amount of each gender**
+
+```{r}
+
+
+
+
+
+
+
+
+
+
+ #Load required libraries
+library(tidyverse)   # For data manipulation and visualization
+library(ggrepel)     # ggplot extension for improved text labels
+library(ggthemes)    # ggplot extension for additional themes
+library(dplyr)
+# Load the data from the CSV URL
+data<- read_csv("C:\\Users\\mikey\\OneDrive\\Desktop\\data 309\\DATA SETS\\Final_data.csv")
+
+
+df_selected <- data |> 
+  select(Age, Gender,
+         `Weight (kg)`, 
+         `Height (m)`, 
+         Calories_Burned, 
+         Workout_Type, 
+         BMI, 
+         Fat_Percentage)
+
+
+df_mutated <- df_selected |> 
+  mutate(BMI_Category = case_when(
+    BMI < 18.5 ~ "Underweight",
+    BMI < 25 ~ "Normal",
+    BMI < 30 ~ "Overweight",
+    TRUE ~ "Obese"
+  ))
+
+
+df_filtered <- df_mutated |>
+  filter(Age >= 18)
+
+ 
+distinct_workouts <- df_filtered |> 
+  select(Workout_Type) |> 
+  distinct()
+
+ 
+summary_df <- df_filtered |>
+  group_by(Gender, Workout_Type) |> 
+  summarize(
+    mean_calories = mean(Calories_Burned, na.rm = TRUE),
+    mean_BMI = mean(BMI, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+ 
+pivoted_df <- summary_df |> 
+  select(Gender, Workout_Type, mean_calories) |> 
+  pivot_wider(names_from = Gender, values_from = mean_calories)
+
+
+diff_df <- pivoted_df |> 
+  mutate(difference = Male - Female)
+
+
+# Divergent bar graph using ggplot2
+# Bars show difference in mean calories (Male - Female)
+# Uses ggrepel for non-overlapping labels (ggplot extension)
+ggplot(diff_df, aes(x = reorder(Workout_Type, difference), y = difference, fill = difference > 0)) +
+  geom_bar(stat = "identity") +
+  geom_label_repel(aes(label = round(difference, 2)), 
+                   direction = "y", 
+                   size = 3, 
+                   fill = "white") +  # Using geom_label_repel from ggrepel for better annotation
+  scale_fill_manual(values = c("TRUE" = "blue", "FALSE" = "pink"), guide = FALSE) +  # scale_fill_manual for custom colors
+  coord_flip() +  # Flip coordinates for horizontal (divergent) bars
+  labs(
+    title = "Difference in Average Calories Burned by Gender and Workout Type",
+    subtitle = "Positive: Males higher | Negative: Females higher",
+    caption = "Data from Final_data.csv | Descriptive means used for comparison",
+    x = "Workout Type",  # Custom axis labels
+    y = "Calories Difference (Male - Female)"
+  ) +
+  scale_y_continuous(labels = scales::comma) +  # scale_y_continuous for formatted labels
+  theme_minimal()
+```
